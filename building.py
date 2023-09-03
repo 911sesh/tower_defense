@@ -1,5 +1,5 @@
 import pygame as pg
-
+from cell import Block
 
 class Cell(pg.sprite.Sprite):
     def __init__(self, size: int, x: int, y: int, *groups):
@@ -8,17 +8,20 @@ class Cell(pg.sprite.Sprite):
         self.filler = 1
         self.color = (20, 20, 20)
         self.available = False
+        self.block = None
 
     def draw(self, surface):
-        pg.draw.rect(surface, self.color, self.rect, self.filler)
+        if self.block is None:
+            pg.draw.rect(surface, self.color, self.rect, self.filler)
+        else:
+            self.block.update(surface)
 
     def click(self, player):
         m_pos = pg.mouse.get_pos()
         keys = pg.key.get_pressed()
         if not keys[pg.K_TAB]:
             if pg.mouse.get_pressed()[0] and self.rect.collidepoint(m_pos) and self.available:
-                self.filler = 0
-                self.color = 'green'
+                self.block = Block(self.rect.topleft)
 
     def update(self, screen, player):
         self.draw(screen)

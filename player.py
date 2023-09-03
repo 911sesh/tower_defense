@@ -23,7 +23,6 @@ class Player(pg.sprite.Sprite):
             self.rect.left = 0
         if self.rect.right > 1400:
             self.rect.right = 1400
-        print(2, self.dir.y, self.jump_speed)
 
     def change_dir(self):
         keys = pg.key.get_pressed()
@@ -38,7 +37,6 @@ class Player(pg.sprite.Sprite):
             self.dir.y = 1
         elif self.jump_speed < 0:
             self.dir.y = -1
-        print(1, self.dir.y, self.jump_speed)
 
     def attack(self):
         if pg.mouse.get_pressed()[2]:
@@ -69,7 +67,6 @@ class Player(pg.sprite.Sprite):
         if self.rect.bottom > 900:
             self.rect.bottom = 900
             self.jump_speed = 0
-        print(4, self.dir.y, self.jump_speed)
 
     def follow(self):
         self.building_zone.center = self.rect.center
@@ -81,7 +78,6 @@ class Player(pg.sprite.Sprite):
                     self.rect.right = cell.rect.left
                 elif self.dir.x == -1:
                     self.rect.left = cell.rect.right
-        print(3, self.dir.y, self.jump_speed)
 
     def check_building_collisions_y(self, cells):
         for cell in cells:
@@ -90,7 +86,6 @@ class Player(pg.sprite.Sprite):
                     self.rect.top = cell.rect.bottom
                 else:
                     self.jump_speed = 0
-        print(5, self.dir.y, self.jump_speed)
 
     def update(self, screen, cells):
         self.change_dir()
