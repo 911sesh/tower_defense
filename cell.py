@@ -1,5 +1,5 @@
 import pygame as pg
-
+pg.init()
 class Block(pg.sprite.Sprite):
     def __init__(self, pos):
         super().__init__()
