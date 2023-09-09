@@ -1,5 +1,5 @@
 import pygame as pg
-
+from cell import Stone, Sand
 pg.init()
 
 class Player(pg.sprite.Sprite):
@@ -8,6 +8,7 @@ class Player(pg.sprite.Sprite):
         self.image = pg.image.load('1 Woodcutter/Woodcutter.png')
         self.image = pg.transform.scale(self.image, (64, 64))
         self.default_image = self.image
+        self.reverse_image = pg.transform.flip(self.image, True, False)
         self.attack_images = [pg.image.load(f'1 Woodcutter/Woodcutter_attack{i}.png') for i in range(1, 4)]
         self.frame = 0
         self.is_animated = False
@@ -17,12 +18,19 @@ class Player(pg.sprite.Sprite):
         self.dir = pg.Vector2()
         self.building_zone = pg.Rect(self.rect.x - 64, self.rect.y - 64, 192, 192)
 
+
     def move(self):
         self.rect.x += 5 * self.dir.x
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > 1400:
             self.rect.right = 1400
+
+    def flip(self):
+        if pg.key.get_pressed()[pg.K_a]:
+            self.image = self.reverse_image
+        else:
+            self.image = self.default_image
 
     def change_dir(self):
         keys = pg.key.get_pressed()
@@ -68,12 +76,22 @@ class Player(pg.sprite.Sprite):
             self.rect.bottom = 900
             self.jump_speed = 0
 
+    def _break(self, cells):
+        m_pos = pg.mouse.get_pos()
+        for cell in cells:
+            if self.building_zone.colliderect(cell) and cell.rect.collidepoint(m_pos) and pg.mouse.get_pressed()[1]:
+                if cell.block and cell.block.durability != 0:
+                    cell.block.durability -= 1
+                    cell.block.clarity -= 1
+                else:
+                    cell.block = None
+
     def follow(self):
         self.building_zone.center = self.rect.center
 
     def check_building_collisions_x(self, cells):
         for cell in cells:
-            if self.rect.colliderect(cell.rect) and cell.filler == 0:
+            if self.rect.colliderect(cell.rect) and cell.block:
                 if self.dir.x == 1:
                     self.rect.right = cell.rect.left
                 elif self.dir.x == -1:
@@ -81,7 +99,7 @@ class Player(pg.sprite.Sprite):
 
     def check_building_collisions_y(self, cells):
         for cell in cells:
-            if self.rect.colliderect(cell.rect) and cell.filler == 0:
+            if self.rect.colliderect(cell.rect) and cell.block:
                 if self.dir.y == -1:
                     self.rect.top = cell.rect.bottom
                 else:
@@ -96,6 +114,8 @@ class Player(pg.sprite.Sprite):
         self.check_building_collisions_y(cells)
         self.attack()
         self.attack_animation()
+        self._break(cells)
+        self.flip()
         pg.draw.rect(screen, 'green', self.rect, width=1)
         pg.draw.rect(screen, 'violet', self.building_zone, width=1)
         screen.blit(self.image, self.rect)
