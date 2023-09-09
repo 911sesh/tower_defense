@@ -6,7 +6,6 @@ from inventory import Inventory
 
 pg.init()
 
-
 class MainMenu:
     def __init__(self):
         self.play_button = Button((200, 200), 'white', 'PLAY', 60, 'black', (700, 450))
@@ -46,9 +45,9 @@ class Game:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     exit()
-            self.player.update(self.window, self.web.cells)
             self.web.update(self.window, self.player)
             self.inventory.update(self.window)
+            self.player.update(self.window, self.web.cells)
             pg.display.update()
             self.fps.tick(60)
 
