@@ -1,5 +1,6 @@
 import pygame as pg
 from cell import Stone, Sand
+from hud import HUDBar
 pg.init()
 
 class Player(pg.sprite.Sprite):
@@ -17,6 +18,7 @@ class Player(pg.sprite.Sprite):
         self.boost = 9.8
         self.dir = pg.Vector2()
         self.building_zone = pg.Rect(self.rect.x - 64, self.rect.y - 64, 192, 192)
+        self.hudbar = HUDBar()
 
 
     def move(self):
@@ -115,6 +117,7 @@ class Player(pg.sprite.Sprite):
         self.attack()
         self.attack_animation()
         self._break(cells)
+        self.hudbar.update(screen)
         self.flip()
         pg.draw.rect(screen, 'green', self.rect, width=1)
         pg.draw.rect(screen, 'violet', self.building_zone, width=1)
