@@ -2,7 +2,6 @@ import pygame as pg
 
 pg.init()
 
-
 class Button(pg.sprite.Sprite):
     def __init__(self, size: tuple[int, int], color: str, text: str, font_size: int, font_color: str,
                  pos: tuple[int, int]):

@@ -19,6 +19,7 @@ class Player(pg.sprite.Sprite):
         self.dir = pg.Vector2()
         self.building_zone = pg.Rect(self.rect.x - 64, self.rect.y - 64, 192, 192)
         self.hudbar = HUDBar()
+        self.chosen_item = self.hudbar.chosen_cell
 
 
     def move(self):

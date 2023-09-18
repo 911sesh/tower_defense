@@ -1,5 +1,5 @@
 import pygame as pg
-
+from cell import Sand, Stone
 pg.init()
 #для клавиш 1-9 выбирается ячейка в хотбаре
 class HUDBar(pg.sprite.Sprite):
@@ -22,24 +22,10 @@ class HUDBar(pg.sprite.Sprite):
 
     def choose_cell(self):
         keys = pg.key.get_pressed()
-        if keys[pg.K_1]:
-            self.chosen_cell = self.cells.sprites()[0]
-        elif keys[pg.K_2]:
-            self.chosen_cell = self.cells.sprites()[1]
-        elif keys[pg.K_3]:
-            self.chosen_cell = self.cells.sprites()[2]
-        elif keys[pg.K_4]:
-            self.chosen_cell = self.cells.sprites()[3]
-        elif keys[pg.K_5]:
-            self.chosen_cell = self.cells.sprites()[4]
-        elif keys[pg.K_6]:
-            self.chosen_cell = self.cells.sprites()[5]
-        elif keys[pg.K_7]:
-            self.chosen_cell = self.cells.sprites()[6]
-        elif keys[pg.K_8]:
-            self.chosen_cell = self.cells.sprites()[7]
-        elif keys[pg.K_9]:
-            self.chosen_cell = self.cells.sprites()[8]
+        for i in range(pg.K_1, pg.K_9 + 1):
+            if keys[i]:
+                self.chosen_cell.image.fill('white')
+                self.chosen_cell = self.cells.sprites()[i - 49]
 
     def update(self, screen):
         screen.blit(self.image, self.rect)
@@ -54,7 +40,12 @@ class HUDBarCell(pg.sprite.Sprite):
         self.image = pg.Surface((40, 60))
         self.rect = self.image.get_rect(topleft=(x, y))
         self.image.fill('white')
-        self.item = None
+        self.item = Sand(self.rect.topleft)
+
+    def show_item_picture(self, screen):
+        screen.blit(self.item.image, self.item.rect)
 
     def update(self, screen):
         screen.blit(self.image, self.rect)
+        self.show_item_picture(screen)
+

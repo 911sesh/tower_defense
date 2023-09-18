@@ -1,5 +1,7 @@
 import pygame as pg
-from cell import Block
+from cell import Stone, Sand
+import random
+pg.init()
 
 class Cell(pg.sprite.Sprite):
     def __init__(self, size: int, x: int, y: int, *groups):
@@ -20,8 +22,10 @@ class Cell(pg.sprite.Sprite):
         m_pos = pg.mouse.get_pos()
         keys = pg.key.get_pressed()
         if not keys[pg.K_TAB]:
-            if pg.mouse.get_pressed()[0] and self.rect.collidepoint(m_pos) and self.available:
-                self.block = Block(self.rect.topleft)
+            if pg.mouse.get_pressed()[0] and self.rect.collidepoint(m_pos) and self.available and not self.block:
+                if player.chosen_item:
+                    self.block = player.chosen_item
+                    self.block.rect.topleft = self.rect.topleft
 
     def update(self, screen, player):
         self.draw(screen)
