@@ -1,10 +1,11 @@
 import pygame as pg
 from button import Button
 from player import Player
-from building import MapWeb
+from building_map import Map
 from inventory import Inventory
 
 pg.init()
+
 
 class MainMenu:
     def __init__(self):
@@ -24,7 +25,7 @@ class Game:
         self.fps = pg.time.Clock()
         self.menu = MainMenu()
         self.player = Player()
-        self.web = MapWeb(32)
+        self.web = Map(32)
         self.inventory = Inventory()
 
     def run_menu(self):
@@ -47,7 +48,7 @@ class Game:
                     exit()
             self.web.update(self.window, self.player)
             self.inventory.update(self.window)
-            self.player.update(self.window, self.web.cells)
+            self.player.update(self.window, self.web)
             pg.display.update()
             self.fps.tick(60)
 
