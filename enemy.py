@@ -9,7 +9,8 @@ class Enemy(pg.sprite.Sprite):
         self.health = 10
         self.speed = 2
         self.is_available = False
-        self.hitbox_zone = None
+        self.discard_range = 0
+
 
     def spawn(self, screen):
         screen.blit(self.image, self.rect)
@@ -28,7 +29,29 @@ class Enemy(pg.sprite.Sprite):
                     self.rect.right = block.rect.left
                 if block.rect.right > self.rect.left > block.rect.left:
                     self.rect.left = block.rect.right
+
+    def attack(self, player):
+        if self.rect.colliderect(player.rect):
+            self.discard_range = 6
+            player.hp -= 1
+        if 0 < self.discard_range < 7:
+            if player.rect.bottom > self.rect.top:
+                if player.rect.left < self.rect.right < player.rect.right:
+                    self.rect.right = player.rect.left
+                elif player.rect.right > self.rect.left > player.rect.left:
+                    self.rect.left = player.rect.right
+                if self.rect.right <= player.rect.left:
+                    player.rect.x += self.discard_range
+                elif self.rect.left >= player.rect.right:
+                    player.rect.x -= self.discard_range
+            else:
+                player.rect.y -= self.discard_range
+            self.discard_range -= 0.2
+
+
     def update(self, screen, player, map):
         self.spawn(screen)
         self.move(player)
         self.map_collisions(map)
+        self.attack(player)
+
