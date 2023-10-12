@@ -3,9 +3,20 @@ from button import Button
 from player import Player
 from building_map import Map
 from inventory import Inventory
+from enemy import Enemy
 
 pg.init()
 
+class PauseMenu():
+    def __init__(self):
+        self.resume_button = Button((200, 200), 'white', 'RESUME', 60, 'grey82', (700, 450))
+        self.exit_button = Button((200, 200), 'white', 'EXIT', 60, 'grey82', (350, 450))
+        self.options_button = Button((200, 200), 'white', 'OPTIONS', 60, 'grey82', (1050, 450))
+
+    def update(self, screen):
+        self.resume_button.update(screen)
+        self.exit_button.update(screen)
+        self.options_button.update(screen)
 
 class MainMenu:
     def __init__(self):
@@ -13,10 +24,10 @@ class MainMenu:
         self.exit_button = Button((200, 200), 'white', 'EXIT', 60, 'black', (350, 450))
         self.options_button = Button((200, 200), 'white', 'OPTIONS', 60, 'black', (1050, 450))
 
-    def update(self, surface):
-        self.play_button.update(surface)
-        self.exit_button.update(surface)
-        self.options_button.update(surface)
+    def update(self, screen):
+        self.play_button.update(screen)
+        self.exit_button.update(screen)
+        self.options_button.update(screen)
 
 
 class Game:
@@ -27,6 +38,8 @@ class Game:
         self.player = Player()
         self.web = Map(32)
         self.inventory = Inventory()
+        self.enemy = Enemy()
+        self.pause_menu = PauseMenu()
 
     def run_menu(self):
         while True:
@@ -40,15 +53,29 @@ class Game:
             pg.display.update()
             self.fps.tick(60)
 
+    def pause(self):
+        while True:
+            for event in pg.event.get():
+                if event.type == pg.QUIT or self.pause_menu.exit_button.is_pressed():
+                    exit()
+            if self.pause_menu.resume_button.is_pressed():
+                break
+            self.pause_menu.update(self.window)
+            pg.display.update()
+            self.fps.tick(60)
+
     def play(self):
         while True:
             self.window.fill('black')
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     exit()
+                if event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                    self.pause()
             self.web.update(self.window, self.player)
             self.inventory.update(self.window)
-            self.player.update(self.window, self.web)
+            self.player.update(self.window, self.web, self.enemy)
+            self.enemy.update(self.window, self.player, self.web)
             pg.display.update()
             self.fps.tick(60)
 
