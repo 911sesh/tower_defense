@@ -11,6 +11,7 @@ class Block(pg.sprite.Sprite):
         self.image.fill('red')
         self.clarity = 255
         self.durability = 0
+        self.start_durability = 0
 
     def destroy(self):
         if self.clarity != 0 and self.durability != 0:
@@ -18,6 +19,11 @@ class Block(pg.sprite.Sprite):
             self.durability -= 1
         else:
             self.kill()
+
+    def repair(self):
+        self.durability = self.start_durability
+        self.clarity = 255
+
 
     def update(self, screen):
         self.image.set_alpha(self.clarity)
@@ -29,6 +35,7 @@ class Stone(Block):
         super().__init__(pos)
         self.image.fill((180, 180, 225))
         self.durability = 360
+        self.start_durability = 360
 
 
 class Sand(Block):
@@ -36,3 +43,4 @@ class Sand(Block):
         super().__init__(pos)
         self.image.fill((255, 204, 92))
         self.durability = 180
+        self.start_durability = 180
