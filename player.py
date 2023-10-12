@@ -1,6 +1,8 @@
 import pygame as pg
 from item_block_classes import Stone, Sand
 from hudbar import HUDBar
+from health import HealthHud
+from enemy import Enemy
 
 pg.init()
 
@@ -11,10 +13,11 @@ class Player(pg.sprite.Sprite):
         self.image = pg.transform.scale(pg.image.load('1 Woodcutter/Woodcutter.png'), (64, 64))
         self.default_image = self.image
         self.reverse_image = pg.transform.flip(self.image, True, False)
-        self.attack_images = [pg.image.load(f'1 Woodcutter/Woodcutter_attack{i}.png') for i in range(1, 4)]
+        self.attack_images = [pg.transform.scale(pg.image.load(f'1 Woodcutter/img_{i}.png'), (64, 64)) for i in range(6)]
 
         self.rect = self.image.get_rect(centerx=700, bottom=900)
         self.building_zone = pg.Rect(self.rect.x - 64, self.rect.y - 64, 192, 192)
+        self.hp = 100
 
         self.frame = 0
         self.is_animated = False
@@ -26,11 +29,20 @@ class Player(pg.sprite.Sprite):
         self.hudbar = HUDBar()
         self.chosen_item = self.hudbar.chosen_cell.stack.sprites()[0]
 
+        self.health_hud = HealthHud(550, 0, 300, 20, 100)
+
+        self.enemy = Enemy()
+
     def refresh_item_choose(self):
         if self.hudbar.chosen_cell.stack.sprites():
             self.chosen_item = self.hudbar.chosen_cell.stack.sprites()[0]
         else:
             self.chosen_item = None
+
+    def draw_chosen_item(self, screen):
+        if self.chosen_item:
+            item_image = pg.transform.scale(self.chosen_item.image, (20, 20))
+            screen.blit(item_image, self.rect)
 
     def move(self):
         self.rect.x += 5 * self.dir.x
@@ -59,24 +71,16 @@ class Player(pg.sprite.Sprite):
         elif self.jump_speed < 0:
             self.dir.y = -1
 
-    # def attack(self):
-    #     if pg.mouse.get_pressed()[2]:
-    #         self.is_animated = True
-    #
-    # def attack_animation(self):
-    #     if self.is_animated:
-    #         self.frame += 1
-    #         if 0 < self.frame < 61:
-    #             self.image = self.attack_images[0]
-    #         elif 60 < self.frame < 121:
-    #             self.image = self.attack_images[1]
-    #         elif 120 < self.frame < 181:
-    #             self.image = self.attack_images[2]
-    #         else:
-    #             self.is_animated = False
-    #             self.frame = 0
-    #     else:
-    #         self.image = self.default_image
+    def attack(self):
+        if pg.mouse.get_pressed()[2] and self.frame == 0:
+            self.frame = 1
+
+    def attack_animation(self):
+        if self.frame != 0:
+            self.image = self.attack_images[self.frame // 10]
+            self.frame += 1
+            if self.frame == 60:
+                self.frame = 0
 
     def jump(self):
         keys = pg.key.get_pressed()
@@ -91,9 +95,19 @@ class Player(pg.sprite.Sprite):
 
     def break_block(self, map):
         m_pos = pg.mouse.get_pos()
+        keys = pg.key.get_pressed()
         for block in map.blocks:
-            if self.building_zone.colliderect(block.rect) and block.rect.collidepoint(m_pos) and pg.mouse.get_pressed()[1]:
-                pass
+            if self.building_zone.colliderect(block.rect) and block.rect.collidepoint(m_pos) and pg.mouse.get_pressed()[1] and not keys[pg.K_TAB]:
+                block.destroy()
+                self.return_block(block)
+            else:
+                block.repair()
+
+    def return_block(self, block):
+        if block.durability == 0 or block.clarity == 0:
+            block.rect.topleft = self.hudbar.cells.sprites()[0].rect.topleft
+            self.hudbar.cells.sprites()[0].stack.add(block)
+
 
     @staticmethod
     def mouse_block_colliding(map):
@@ -103,14 +117,16 @@ class Player(pg.sprite.Sprite):
                 return True
         return False
 
-    def place_block(self, map):
+    def place_block(self, map, enemy):
         m_pos = pg.mouse.get_pos()
         keys = pg.key.get_pressed()
         r_click = pg.mouse.get_pressed()[0]
-        print(self.hudbar.chosen_cell.stack.sprites())
         if r_click and self.chosen_item is not None and not keys[pg.K_TAB] and not self.mouse_block_colliding(map):
             for cell in map.cells:
-                pass
+                if self.building_zone.colliderect(cell.rect) and not self.rect.colliderect(cell.rect) and cell.rect.collidepoint(m_pos) and not enemy.rect.colliderect(cell.rect):
+                    self.chosen_item.kill()
+                    self.chosen_item.rect.topleft = cell.rect.topleft
+                    map.blocks.add(self.chosen_item)
 
     def follow(self):
         self.building_zone.center = self.rect.center
@@ -131,7 +147,7 @@ class Player(pg.sprite.Sprite):
                 else:
                     self.jump_speed = 0
 
-    def update(self, screen, map):
+    def update(self, screen, map, enemy):
         self.change_dir()
         self.follow()
         self.flip()
@@ -142,12 +158,15 @@ class Player(pg.sprite.Sprite):
         self.check_building_collisions_y(map)
 
         self.break_block(map)
-        self.place_block(map)
+        self.place_block(map, enemy)
 
         self.hudbar.update(screen)
+        self.draw_chosen_item(screen)
         self.refresh_item_choose()
-        # self.attack()
-        # self.attack_animation()
+
+        self.health_hud.update(screen, self)
+        self.attack()
+        self.attack_animation()
 
         pg.draw.rect(screen, 'green', self.rect, width=1)
         pg.draw.rect(screen, 'violet', self.building_zone, width=1)
