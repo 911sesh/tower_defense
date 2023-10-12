@@ -3,8 +3,6 @@ from item_block_classes import Sand, Stone
 
 pg.init()
 
-
-# для клавиш 1-9 выбирается ячейка в хотбаре
 class HUDBar(pg.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -21,7 +19,7 @@ class HUDBar(pg.sprite.Sprite):
         return group
 
     def fill_chosen_cell(self):
-        self.chosen_cell.image.fill('red')
+        self.chosen_cell.image.fill('grey82')
 
     def choose_cell(self):
         keys = pg.key.get_pressed()
@@ -36,7 +34,6 @@ class HUDBar(pg.sprite.Sprite):
         self.fill_chosen_cell()
         self.cells.update(screen)
 
-
 class HUDBarCell(pg.sprite.Sprite):
     def __init__(self, x, y, *groups):
         super().__init__(*groups)
@@ -46,7 +43,7 @@ class HUDBarCell(pg.sprite.Sprite):
 
         self.stack = pg.sprite.Group()
         self.stack.add(Sand(self.rect.topleft), Sand(self.rect.topleft), Sand(self.rect.topleft),
-                       Sand(self.rect.topleft), Sand(self.rect.topleft), Sand(self.rect.topleft))
+                       Sand(self.rect.topleft), Sand(self.rect.topleft), Sand(self.rect.topleft), Stone(self.rect.topleft))
         self.item_counter = len(self.stack)
 
 
