@@ -6,6 +6,8 @@ from inventory import Inventory
 from enemy import Enemy
 
 pg.init()
+pg.display.set_caption('TOWER DEFENSE')
+pg.display.set_icon(pg.image.load('1 Woodcutter/gamepad_icon.png'))
 
 class PauseMenu():
     def __init__(self):

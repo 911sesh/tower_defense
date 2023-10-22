@@ -6,23 +6,66 @@ from enemy import Enemy
 
 pg.init()
 
-
 class Player(pg.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pg.transform.scale(pg.image.load('1 Woodcutter/Woodcutter.png'), (64, 64))
         self.default_image = self.image
         self.reverse_image = pg.transform.flip(self.image, True, False)
-        self.attack_images = [pg.transform.scale(pg.image.load(f'1 Woodcutter/img_{i}.png'), (64, 64)) for i in range(6)]
+
+        self.right_attack_images = [pg.transform.scale(pg.image.load(f'1 Woodcutter/img_{i}.png'), (64, 64)) for i in range(6)]
+        for i in self.right_attack_images:
+            i.set_colorkey((255, 255, 255))
+
+        self.left_attack_images = [pg.transform.flip(i, True, False) for i in self.right_attack_images]
+
+        self.hurt_images = [pg.transform.scale(pg.image.load(f'1 Woodcutter/img_{i}.png'), (64, 64)) for i in range(6, 9)]
+        for i in self.hurt_images:
+            i.set_colorkey((255, 255, 255))
+
+        self.hurt_images_reverse = [pg.transform.flip(i, True, False) for i in self.hurt_images]
+
+        self.walk_images_right = [pg.transform.scale(pg.image.load(f'1 Woodcutter/img_{i}.png'), (64, 64)) for i in range(9, 15)]
+        for i in self.walk_images_right:
+            i.set_colorkey((255, 255, 255))
+
+        self.walk_images_left = [pg.transform.flip(i, True, False) for i in self.walk_images_right]
+
+        self.run_images_right = [pg.transform.scale(pg.image.load(f'1 Woodcutter/img_{i}.png'), (64, 64)) for i in range(15, 21)]
+        for i in self.run_images_right:
+            i.set_colorkey((255, 255, 255))
+
+        self.run_images_left = [pg.transform.flip(i, True, False) for i in self.run_images_right]
+
+        self.idle_images_right = [pg.transform.scale(pg.image.load(f'1 Woodcutter/img_{i}.png'), (64, 64)) for i in range(21, 25)]
+        for i in self.idle_images_right:
+            i.set_colorkey((255, 255, 255))
+
+        self.idle_images_left = [pg.transform.flip(i, True, False) for i in self.idle_images_right]
+
+        self.jump_images_right = [pg.transform.scale(pg.image.load(f'1 Woodcutter/img_{i}.png'), (64, 64)) for i in range(25, 31)]
+        for i in self.jump_images_right:
+            i.set_colorkey((255, 255, 255))
+
+        self.jump_images_left = [pg.transform.flip(i, True, False) for i in self.jump_images_right]
+
+        self.craft_images_right = [pg.transform.scale(pg.image.load(f'1 Woodcutter/img_{i}.png'), (64, 64)) for i in range(31, 35)]
+        for i in self.craft_images_right:
+            i.set_colorkey((255, 255, 255))
+
+        self.craft_images_left = [pg.transform.flip(i, True, False) for i in self.craft_images_right]
+
 
         self.rect = self.image.get_rect(centerx=700, bottom=900)
         self.building_zone = pg.Rect(self.rect.x - 64, self.rect.y - 64, 192, 192)
         self.hp = 100
 
-        self.frame = 0
+        self.timers = {'attack': 0, 'hurt': 0, 'walk': 0, 'run': 0, 'idle': 0, 'jump': 0, 'craft': 0}
         self.is_animated = False
+        self.last_dir = 1
 
         self.jump_speed = 0
+        self.speed = 3
         self.boost = 9.8
         self.dir = pg.Vector2()
 
@@ -30,8 +73,6 @@ class Player(pg.sprite.Sprite):
         self.chosen_item = self.hudbar.chosen_cell.stack.sprites()[0]
 
         self.health_hud = HealthHud(550, 0, 300, 20, 100)
-
-        self.enemy = Enemy()
 
     def refresh_item_choose(self):
         if self.hudbar.chosen_cell.stack.sprites():
@@ -45,17 +86,18 @@ class Player(pg.sprite.Sprite):
             screen.blit(item_image, self.rect)
 
     def move(self):
-        self.rect.x += 5 * self.dir.x
+        self.rect.x += 3 * self.dir.x
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > 1400:
             self.rect.right = 1400
 
     def flip(self):
-        if pg.key.get_pressed()[pg.K_a]:
+        if self.last_dir == -1:
             self.image = self.reverse_image
-        else:
+        elif self.last_dir == 1:
             self.image = self.default_image
+
 
     def change_dir(self):
         keys = pg.key.get_pressed()
@@ -72,15 +114,103 @@ class Player(pg.sprite.Sprite):
             self.dir.y = -1
 
     def attack(self):
-        if pg.mouse.get_pressed()[2] and self.frame == 0:
-            self.frame = 1
+        if pg.mouse.get_pressed()[2] and self.timers['attack'] == 0:
+            self.timers['attack'] = 1
 
     def attack_animation(self):
-        if self.frame != 0:
-            self.image = self.attack_images[self.frame // 10]
-            self.frame += 1
-            if self.frame == 60:
-                self.frame = 0
+        current_animation_list = None
+        if self.last_dir == 1:
+            current_animation_list = self.right_attack_images
+        elif self.last_dir == -1:
+            current_animation_list = self.left_attack_images
+        if self.timers['attack'] != 0:
+            self.image = current_animation_list[self.timers['attack'] // 10]
+            self.timers['attack'] += 1
+            if self.timers['attack'] == 60:
+                self.timers['attack'] = 0
+                if self.last_dir == 1:
+                    self.image = self.default_image
+                else:
+                    self.image = self.reverse_image
+
+    def hurt_animation(self, enemy):
+        if self.timers['hurt'] == 0:
+            self.timers['hurt'] = 1
+        if self.timers['hurt'] > 0 and self.last_dir == 1:
+            self.image = self.hurt_images[self.timers['hurt'] // 10]
+            self.timers['hurt'] += 1
+        elif self.timers['hurt'] > 0 and self.last_dir == -1:
+            self.image = self.hurt_images_reverse[self.timers['hurt'] // 10]
+            self.timers['hurt'] += 1
+        if self.timers['hurt'] == 30:
+            self.timers['hurt'] = 0
+
+
+    def walk_animation(self):
+        if self.timers['walk'] == 0:
+            self.timers['walk'] = 1
+        if self.timers['walk'] > 0 and self.dir.x == 1:
+            self.image = self.walk_images_right[self.timers['walk'] // 10]
+            self.timers['walk'] += 1
+        elif self.timers['walk'] > 0 and self.dir.x == -1:
+            self.image = self.walk_images_left[self.timers['walk'] // 10]
+            self.timers['walk'] += 1
+        if self.timers['walk'] == 60:
+            self.timers['walk'] = 0
+
+    def boost_animation(self):
+        keys = pg.key.get_pressed()
+        if self.timers['run'] == 0:
+            self.timers['run'] = 1
+        if self.timers['run'] > 0 and self.dir.x == 1 and keys[pg.K_LSHIFT]:
+            self.image = self.run_images_right[self.timers['run'] // 10]
+            self.timers['run'] += 1
+        elif self.timers['run'] > 0 and self.dir.x == -1 and keys[pg.K_LSHIFT]:
+            self.image = self.run_images_left[self.timers['run'] // 10]
+            self.timers['run'] += 1
+        if self.timers['run'] == 60:
+            self.timers['run'] = 0
+
+    def idle_animation(self):
+        if self.timers['idle'] == 0:
+            self.timers['idle'] = 1
+        if self.timers['idle'] > 0 and self.last_dir == 1:
+            self.image = self.idle_images_right[self.timers['idle'] // 10]
+            self.timers['idle'] += 1
+        elif self.timers['idle'] > 0 and self.last_dir == -1:
+            self.image = self.idle_images_left[self.timers['idle'] // 10]
+            self.timers['idle'] += 1
+        if self.timers['idle'] == 40:
+            self.timers['idle'] = 0
+
+    def jump_animation(self):
+        keys = pg.key.get_pressed()
+        if keys[pg.K_SPACE]:
+            if self.timers['jump'] == 0:
+                self.timers['jump'] = 1
+            if self.timers['jump'] > 0 and self.last_dir == 1:
+                self.image = self.jump_images_right[self.timers['jump'] // 10]
+                self.timers['jump'] += 1
+            elif self.timers['jump'] > 0 and self.last_dir == -1:
+                self.image = self.jump_images_left[self.timers['jump'] // 10]
+                self.timers['jump'] += 1
+            if self.timers['jump'] == 60:
+                self.timers['jump'] = 0
+
+    def craft_animation(self):
+        keys = pg.key.get_pressed()
+        if keys[pg.K_e]:
+            if self.timers['craft'] == 0:
+                self.timers['craft'] = 1
+            if self.timers['craft'] > 0 and self.last_dir == 1:
+                self.image = self.craft_images_right[self.timers['craft'] // 10]
+                self.timers['craft'] += 1
+            elif self.timers['craft'] > 0 and self.last_dir == -1:
+                self.image = self.craft_images_left[self.timers['craft'] // 10]
+                self.timers['craft'] += 1
+            if self.timers['craft'] == 40:
+                self.timers['craft'] = 0
+
 
     def jump(self):
         keys = pg.key.get_pressed()
@@ -165,9 +295,16 @@ class Player(pg.sprite.Sprite):
         self.refresh_item_choose()
 
         self.health_hud.update(screen, self)
+        self.idle_animation()
+        self.craft_animation()
+        self.walk_animation()
+        self.boost_animation()
         self.attack()
         self.attack_animation()
+        self.jump_animation()
 
         pg.draw.rect(screen, 'green', self.rect, width=1)
         pg.draw.rect(screen, 'violet', self.building_zone, width=1)
         screen.blit(self.image, self.rect)
+        if self.dir.x != 0:
+            self.last_dir = self.dir.x

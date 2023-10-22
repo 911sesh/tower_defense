@@ -1,4 +1,6 @@
 import pygame as pg
+
+pg.init()
 class Enemy(pg.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -35,6 +37,7 @@ class Enemy(pg.sprite.Sprite):
             self.discard_range = 6
             player.hp -= 1
         if 0 < self.discard_range < 7:
+            player.hurt_animation(self)
             if player.rect.bottom > self.rect.top:
                 if player.rect.left < self.rect.right < player.rect.right:
                     self.rect.right = player.rect.left
@@ -47,6 +50,7 @@ class Enemy(pg.sprite.Sprite):
             else:
                 player.rect.y -= self.discard_range
             self.discard_range -= 0.2
+
 
 
     def update(self, screen, player, map):
