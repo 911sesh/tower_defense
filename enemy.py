@@ -8,7 +8,7 @@ class Enemy(pg.sprite.Sprite):
         self.rect = self.image.get_rect(bottom=900)
         self.color = 'red'
         self.image.fill(self.color)
-        self.health = 10
+        self.health = 100
         self.speed = 2
         self.is_available = False
         self.discard_range = 0
@@ -18,10 +18,10 @@ class Enemy(pg.sprite.Sprite):
         screen.blit(self.image, self.rect)
 
     def move(self, player):
-        if not self.rect.colliderect(player.rect):
-            if self.rect.x > player.rect.x:
+        if not self.rect.colliderect(player.body_rect):
+            if self.rect.x > player.body_rect.x:
                 self.rect.x -= self.speed
-            elif self.rect.x < player.rect.x:
+            elif self.rect.x < player.body_rect.x:
                 self.rect.x += self.speed
 
     def map_collisions(self, map):
@@ -33,19 +33,19 @@ class Enemy(pg.sprite.Sprite):
                     self.rect.left = block.rect.right
 
     def attack(self, player):
-        if self.rect.colliderect(player.rect):
+        if self.rect.colliderect(player.body_rect):
             self.discard_range = 6
             player.hp -= 1
         if 0 < self.discard_range < 7:
-            player.hurt_animation(self)
-            if player.rect.bottom > self.rect.top:
-                if player.rect.left < self.rect.right < player.rect.right:
-                    self.rect.right = player.rect.left
-                elif player.rect.right > self.rect.left > player.rect.left:
-                    self.rect.left = player.rect.right
-                if self.rect.right <= player.rect.left:
+            player.hurt_animation()
+            if player.body_rect.bottom > self.rect.top:
+                if player.body_rect.left < self.rect.right < player.body_rect.right:
+                    self.rect.right = player.body_rect.left
+                elif player.body_rect.right > self.rect.left > player.body_rect.left:
+                    self.rect.left = player.body_rect.right
+                if self.rect.right <= player.body_rect.left:
                     player.rect.x += self.discard_range
-                elif self.rect.left >= player.rect.right:
+                elif self.rect.left >= player.body_rect.right:
                     player.rect.x -= self.discard_range
             else:
                 player.rect.y -= self.discard_range

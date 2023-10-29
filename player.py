@@ -1,7 +1,7 @@
 import pygame as pg
 from item_block_classes import Stone, Sand
 from hudbar import HUDBar
-from health import HealthHud
+from health import HealthHud, Stamina
 from enemy import Enemy
 
 pg.init()
@@ -55,10 +55,13 @@ class Player(pg.sprite.Sprite):
 
         self.craft_images_left = [pg.transform.flip(i, True, False) for i in self.craft_images_right]
 
+        self.body_rect = pg.Rect(0, 0, 30, 42)
 
         self.rect = self.image.get_rect(centerx=700, bottom=900)
         self.building_zone = pg.Rect(self.rect.x - 64, self.rect.y - 64, 192, 192)
         self.hp = 100
+        self.stamina = 100
+        self.rest = False
 
         self.timers = {'attack': 0, 'hurt': 0, 'walk': 0, 'run': 0, 'idle': 0, 'jump': 0, 'craft': 0}
         self.is_animated = False
@@ -66,13 +69,14 @@ class Player(pg.sprite.Sprite):
 
         self.jump_speed = 0
         self.speed = 3
-        self.boost = 9.8
+        self.g = 9.8
         self.dir = pg.Vector2()
 
         self.hudbar = HUDBar()
         self.chosen_item = self.hudbar.chosen_cell.stack.sprites()[0]
 
         self.health_hud = HealthHud(550, 0, 300, 20, 100)
+        self.stamina_hud = Stamina(550, 20, 300, 20, 100)
 
     def refresh_item_choose(self):
         if self.hudbar.chosen_cell.stack.sprites():
@@ -86,11 +90,21 @@ class Player(pg.sprite.Sprite):
             screen.blit(item_image, self.rect)
 
     def move(self):
-        self.rect.x += 3 * self.dir.x
+        self.rect.x += self.speed * self.dir.x
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > 1400:
             self.rect.right = 1400
+
+    def boost(self):
+        keys = pg.key.get_pressed()
+        if keys[pg.K_LSHIFT] and self.dir.x != 0 and self.stamina > 0:
+            self.speed = 6
+            self.stamina -= 0.5
+        else:
+            self.speed = 3
+            if self.stamina < 100:
+                self.stamina += 0.2
 
     def flip(self):
         if self.last_dir == -1:
@@ -133,7 +147,7 @@ class Player(pg.sprite.Sprite):
                 else:
                     self.image = self.reverse_image
 
-    def hurt_animation(self, enemy):
+    def hurt_animation(self):
         if self.timers['hurt'] == 0:
             self.timers['hurt'] = 1
         if self.timers['hurt'] > 0 and self.last_dir == 1:
@@ -160,16 +174,21 @@ class Player(pg.sprite.Sprite):
 
     def boost_animation(self):
         keys = pg.key.get_pressed()
-        if self.timers['run'] == 0:
-            self.timers['run'] = 1
-        if self.timers['run'] > 0 and self.dir.x == 1 and keys[pg.K_LSHIFT]:
-            self.image = self.run_images_right[self.timers['run'] // 10]
-            self.timers['run'] += 1
-        elif self.timers['run'] > 0 and self.dir.x == -1 and keys[pg.K_LSHIFT]:
-            self.image = self.run_images_left[self.timers['run'] // 10]
-            self.timers['run'] += 1
-        if self.timers['run'] == 60:
-            self.timers['run'] = 0
+        if self.stamina > 0 and not self.rest:
+            if self.timers['run'] == 0:
+                self.timers['run'] = 1
+            if self.timers['run'] > 0 and self.dir.x == 1 and keys[pg.K_LSHIFT]:
+                self.image = self.run_images_right[self.timers['run'] // 10]
+                self.timers['run'] += 1
+            elif self.timers['run'] > 0 and self.dir.x == -1 and keys[pg.K_LSHIFT]:
+                self.image = self.run_images_left[self.timers['run'] // 10]
+                self.timers['run'] += 1
+            if self.timers['run'] == 60:
+                self.timers['run'] = 0
+        else:
+            self.rest = True
+        if self.stamina >= 100:
+            self.rest = False
 
     def idle_animation(self):
         if self.timers['idle'] == 0:
@@ -188,28 +207,28 @@ class Player(pg.sprite.Sprite):
         if keys[pg.K_SPACE]:
             if self.timers['jump'] == 0:
                 self.timers['jump'] = 1
-            if self.timers['jump'] > 0 and self.last_dir == 1:
-                self.image = self.jump_images_right[self.timers['jump'] // 10]
-                self.timers['jump'] += 1
-            elif self.timers['jump'] > 0 and self.last_dir == -1:
-                self.image = self.jump_images_left[self.timers['jump'] // 10]
-                self.timers['jump'] += 1
-            if self.timers['jump'] == 60:
-                self.timers['jump'] = 0
+        if self.timers['jump'] > 0 and self.last_dir == 1:
+            self.image = self.jump_images_right[self.timers['jump'] // 10]
+            self.timers['jump'] += 1
+        elif self.timers['jump'] > 0 and self.last_dir == -1:
+            self.image = self.jump_images_left[self.timers['jump'] // 10]
+            self.timers['jump'] += 1
+        if self.timers['jump'] == 60:
+            self.timers['jump'] = 0
 
     def craft_animation(self):
         keys = pg.key.get_pressed()
         if keys[pg.K_e]:
             if self.timers['craft'] == 0:
                 self.timers['craft'] = 1
-            if self.timers['craft'] > 0 and self.last_dir == 1:
-                self.image = self.craft_images_right[self.timers['craft'] // 10]
-                self.timers['craft'] += 1
-            elif self.timers['craft'] > 0 and self.last_dir == -1:
-                self.image = self.craft_images_left[self.timers['craft'] // 10]
-                self.timers['craft'] += 1
-            if self.timers['craft'] == 40:
-                self.timers['craft'] = 0
+        if self.timers['craft'] > 0 and self.last_dir == 1:
+            self.image = self.craft_images_right[self.timers['craft'] // 10]
+            self.timers['craft'] += 1
+        elif self.timers['craft'] > 0 and self.last_dir == -1:
+            self.image = self.craft_images_left[self.timers['craft'] // 10]
+            self.timers['craft'] += 1
+        if self.timers['craft'] == 40:
+            self.timers['craft'] = 0
 
 
     def jump(self):
@@ -217,7 +236,7 @@ class Player(pg.sprite.Sprite):
         if keys[pg.K_SPACE] and self.jump_speed == 0:
             self.jump_speed = -5
         if self.rect.bottom <= 900:
-            self.jump_speed += self.boost / 60
+            self.jump_speed += self.g / 60
             self.rect.y += self.jump_speed
         if self.rect.bottom > 900:
             self.rect.bottom = 900
@@ -260,6 +279,11 @@ class Player(pg.sprite.Sprite):
 
     def follow(self):
         self.building_zone.center = self.rect.center
+        self.body_rect.bottom = self.rect.bottom
+        if self.last_dir == 1:
+            self.body_rect.left = self.rect.left + 5
+        else:
+            self.body_rect.right = self.rect.right - 5
 
     def check_building_collisions_x(self, map):
         for cell in map.blocks:
@@ -283,6 +307,7 @@ class Player(pg.sprite.Sprite):
         self.flip()
 
         self.move()
+        self.boost()
         self.check_building_collisions_x(map)
         self.jump()
         self.check_building_collisions_y(map)
@@ -295,6 +320,7 @@ class Player(pg.sprite.Sprite):
         self.refresh_item_choose()
 
         self.health_hud.update(screen, self)
+        self.stamina_hud.update(screen, self)
         self.idle_animation()
         self.craft_animation()
         self.walk_animation()
@@ -304,6 +330,7 @@ class Player(pg.sprite.Sprite):
         self.jump_animation()
 
         pg.draw.rect(screen, 'green', self.rect, width=1)
+        pg.draw.rect(screen, 'red', self.body_rect, width=1)
         pg.draw.rect(screen, 'violet', self.building_zone, width=1)
         screen.blit(self.image, self.rect)
         if self.dir.x != 0:
