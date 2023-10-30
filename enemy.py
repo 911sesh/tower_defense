@@ -24,6 +24,10 @@ class Enemy(pg.sprite.Sprite):
             elif self.rect.x < player.body_rect.x:
                 self.rect.x += self.speed
 
+    def die(self):
+        if self.health == 0:
+            self.kill()
+
     def map_collisions(self, map):
         for block in map.blocks:
             if self.rect.colliderect(block.rect):
@@ -58,4 +62,5 @@ class Enemy(pg.sprite.Sprite):
         self.move(player)
         self.map_collisions(map)
         self.attack(player)
+        self.die()
 

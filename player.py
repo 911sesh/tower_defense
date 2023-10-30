@@ -55,6 +55,10 @@ class Player(pg.sprite.Sprite):
 
         self.craft_images_left = [pg.transform.flip(i, True, False) for i in self.craft_images_right]
 
+        self.die_images_right = [pg.transform.scale(pg.image.load(f'1 Woodcutter/img_{i}.png'), (64, 64)) for i in range(35, 41)]
+
+        self.die_images_left = [pg.transform.flip(i, True, False) for i in self.die_images_right]
+
         self.body_rect = pg.Rect(0, 0, 30, 42)
 
         self.rect = self.image.get_rect(centerx=700, bottom=900)
@@ -63,7 +67,9 @@ class Player(pg.sprite.Sprite):
         self.stamina = 100
         self.rest = False
 
-        self.timers = {'attack': 0, 'hurt': 0, 'walk': 0, 'run': 0, 'idle': 0, 'jump': 0, 'craft': 0}
+        self.discard_range = 0
+
+        self.timers = {'attack': 0, 'hurt': 0, 'walk': 0, 'run': 0, 'idle': 0, 'jump': 0, 'craft': 0, 'die': 0}
         self.is_animated = False
         self.last_dir = 1
 
@@ -127,9 +133,34 @@ class Player(pg.sprite.Sprite):
         elif self.jump_speed < 0:
             self.dir.y = -1
 
-    def attack(self):
+    def attack(self, enemy):
         if pg.mouse.get_pressed()[2] and self.timers['attack'] == 0:
             self.timers['attack'] = 1
+        if enemy.rect.colliderect(self.rect) and self.timers['attack']:
+            enemy.health -= 10
+            self.discard_range = 10
+        if 0 < self.discard_range < 11:
+            if enemy.rect.left > self.body_rect.right:
+                enemy.rect.x += self.discard_range
+            elif enemy.rect.right < self.body_rect.left:
+                enemy.rect.x -= self.discard_range
+            self.discard_range -= 0.1
+
+    def die(self):
+        if self.hp <= 0 and self.timers['die'] == 59:
+            self.kill()
+
+    def die_animation(self):
+        if self.timers['die'] == 0:
+            self.timers['die'] = 1
+        if self.timers['die'] > 0 and self.last_dir == 1 and self.hp == 0:
+            self.image = self.die_images_right[self.timers['die'] // 10]
+            self.timers['die'] += 1
+        elif self.timers['die'] > 0 and self.last_dir == -1 and self.hp == 0:
+            self.image = self.die_images_left[self.timers['die'] // 10]
+            self.timers['die'] += 1
+        if self.timers['die'] == 60:
+            self.timers['die'] = 0
 
     def attack_animation(self):
         current_animation_list = None
@@ -325,9 +356,11 @@ class Player(pg.sprite.Sprite):
         self.craft_animation()
         self.walk_animation()
         self.boost_animation()
-        self.attack()
+        self.attack(enemy)
         self.attack_animation()
         self.jump_animation()
+        self.die_animation()
+        self.die()
 
         pg.draw.rect(screen, 'green', self.rect, width=1)
         pg.draw.rect(screen, 'red', self.body_rect, width=1)

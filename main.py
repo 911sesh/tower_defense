@@ -38,9 +38,11 @@ class Game:
         self.fps = pg.time.Clock()
         self.menu = MainMenu()
         self.player = Player()
+        self.players = pg.sprite.Group(self.player)
         self.web = Map(32)
         self.inventory = Inventory()
         self.enemy = Enemy()
+        self.enemies = pg.sprite.Group(self.enemy)
         self.pause_menu = PauseMenu()
 
     def run_menu(self):
@@ -76,8 +78,8 @@ class Game:
                     self.pause()
             self.web.update(self.window, self.player)
             self.inventory.update(self.window)
-            self.player.update(self.window, self.web, self.enemy)
-            self.enemy.update(self.window, self.player, self.web)
+            self.players.update(self.window, self.web, self.enemy)
+            self.enemies.update(self.window, self.player, self.web)
             pg.display.update()
             self.fps.tick(60)
 
