@@ -4,14 +4,17 @@ pg.init()
 class Enemy(pg.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pg.Surface((50, 50))
+        self.image = pg.transform.scale(pg.image.load('xeno_grunt/img.png'), (32, 32))
         self.rect = self.image.get_rect(bottom=900)
-        self.color = 'red'
-        self.image.fill(self.color)
+        self.destroy_rect = pg.Rect(0, 0, 48, 48)
         self.health = 100
         self.speed = 2
         self.is_available = False
         self.discard_range = 0
+
+    def follow(self):
+        self.destroy_rect.center = self.rect.center
+
 
 
     def spawn(self, screen):
@@ -37,7 +40,7 @@ class Enemy(pg.sprite.Sprite):
                     self.rect.left = block.rect.right
 
     def attack(self, player):
-        if self.rect.colliderect(player.body_rect):
+        if self.rect.colliderect(player.body_rect) and player.hp > 0:
             self.discard_range = 6
             player.hp -= 1
         if 0 < self.discard_range < 7:
@@ -55,12 +58,19 @@ class Enemy(pg.sprite.Sprite):
                 player.rect.y -= self.discard_range
             self.discard_range -= 0.2
 
-
+    def destroy_blocks(self, map):
+        for block in map.blocks:
+            if self.destroy_rect.colliderect(block.rect):
+                block.destroy()
 
     def update(self, screen, player, map):
         self.spawn(screen)
+        self.follow()
         self.move(player)
         self.map_collisions(map)
         self.attack(player)
+        self.destroy_blocks(map)
         self.die()
+        pg.draw.rect(screen, 'red', self.rect, 1)
+        pg.draw.rect(screen, 'green', self.destroy_rect, 1)
 

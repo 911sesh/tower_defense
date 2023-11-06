@@ -147,8 +147,9 @@ class Player(pg.sprite.Sprite):
             self.discard_range -= 0.1
 
     def die(self):
-        if self.hp <= 0 and self.timers['die'] == 59:
+        if self.timers['die'] == 59:
             self.kill()
+            quit()
 
     def die_animation(self):
         if self.timers['die'] == 0:
