@@ -2,6 +2,7 @@ import pygame as pg
 
 pg.init()
 
+
 class Cell(pg.sprite.Sprite):
     def __init__(self, x, y, *groups):
         super().__init__(*groups)
@@ -12,10 +13,11 @@ class Cell(pg.sprite.Sprite):
     def update(self, screen):
         screen.blit(self.image, self.rect)
 
+
 class Inventory:
     def __init__(self):
         self.image = pg.Surface((1400 // 3, 800))
-        self.rect = self.image.get_rect(centerx=1400//1.20, centery=900//2)
+        self.rect = self.image.get_rect(centerx=1400 // 1.20, centery=900 // 2)
         self.color = 'gray'
         self.cells = self.get_cells()
 
@@ -34,5 +36,3 @@ class Inventory:
 
     def update(self, screen):
         self.open(screen)
-
-

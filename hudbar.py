@@ -3,6 +3,7 @@ from item_block_classes import Sand, Stone
 
 pg.init()
 
+
 class HUDBar(pg.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -34,6 +35,7 @@ class HUDBar(pg.sprite.Sprite):
         self.fill_chosen_cell()
         self.cells.update(screen)
 
+
 class HUDBarCell(pg.sprite.Sprite):
     def __init__(self, x, y, *groups):
         super().__init__(*groups)
@@ -43,9 +45,9 @@ class HUDBarCell(pg.sprite.Sprite):
 
         self.stack = pg.sprite.Group()
         self.stack.add(Sand(self.rect.topleft), Sand(self.rect.topleft), Sand(self.rect.topleft),
-                       Sand(self.rect.topleft), Sand(self.rect.topleft), Sand(self.rect.topleft), Stone(self.rect.topleft))
+                       Sand(self.rect.topleft), Sand(self.rect.topleft), Sand(self.rect.topleft),
+                       Stone(self.rect.topleft))
         self.item_counter = len(self.stack)
-
 
     def show_item_picture(self, screen):
         for item in self.stack:

@@ -24,7 +24,6 @@ class Block(pg.sprite.Sprite):
         self.durability = self.start_durability
         self.clarity = 255
 
-
     def update(self, screen):
         self.image.set_alpha(self.clarity)
         screen.blit(self.image, self.rect)

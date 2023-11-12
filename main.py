@@ -9,7 +9,8 @@ pg.init()
 pg.display.set_caption('TOWER DEFENSE')
 pg.display.set_icon(pg.image.load('1 Woodcutter/gamepad_icon.png'))
 
-class PauseMenu():
+
+class PauseMenu:
     def __init__(self):
         self.resume_button = Button((200, 200), 'white', 'RESUME', 60, 'grey82', (700, 450))
         self.exit_button = Button((200, 200), 'white', 'EXIT', 60, 'grey82', (350, 450))
@@ -19,6 +20,7 @@ class PauseMenu():
         self.resume_button.update(screen)
         self.exit_button.update(screen)
         self.options_button.update(screen)
+
 
 class MainMenu:
     def __init__(self):

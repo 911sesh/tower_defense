@@ -1,6 +1,8 @@
 import pygame as pg
 
 pg.init()
+
+
 class Enemy(pg.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -14,8 +16,6 @@ class Enemy(pg.sprite.Sprite):
 
     def follow(self):
         self.destroy_rect.center = self.rect.center
-
-
 
     def spawn(self, screen):
         screen.blit(self.image, self.rect)
@@ -73,4 +73,3 @@ class Enemy(pg.sprite.Sprite):
         self.die()
         pg.draw.rect(screen, 'red', self.rect, 1)
         pg.draw.rect(screen, 'green', self.destroy_rect, 1)
-
